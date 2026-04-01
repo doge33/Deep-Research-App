@@ -1,0 +1,8 @@
+openai-agents
+openai
+pydantic
+asyncio
+gradio
+python-dotenv
+resend
+
