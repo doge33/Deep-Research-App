@@ -1,6 +1,6 @@
 import gradio as gr
 from dotenv import load_dotenv
-from research_manager import ResearchManager
+#from research_manager import ResearchManager
 from deep_research_manager import DeepResearchManager
 
 load_dotenv(override=True)
@@ -14,10 +14,12 @@ async def run(query: str):
         yield chunk # stream each chunk of result generated
 
 # gr.Blocks(..) allow more customized layouts/event handling...
-with gr.Blocks(theme=gr.themes.Default(primary_hue="sky")) as ui:
+with gr.Blocks(theme=gr.themes.Default(primary_hue="amber", text_size="lg")) as ui:
     gr.Markdown("# Deep Research") #heading
     query_textbox = gr.Textbox(label="What topic would you like to research?") #what the user sees
-    run_button = gr.Button("Run", variant="primary")
+    with gr.Row():
+        run_button = gr.Button("Run", variant="primary")
+        clear_button = gr.Button("Clear")
     report = gr.Markdown(label="Report")
     
     # event handling
@@ -25,6 +27,8 @@ with gr.Blocks(theme=gr.themes.Default(primary_hue="sky")) as ui:
     run_button.click(fn=run, inputs=query_textbox, outputs=report)
     # or if user pressed "Enter" while inside the textbox
     query_textbox.submit(fn=run, inputs=query_textbox, outputs=report)
+
+    clear_button.click(fn=lambda:"", outputs=query_textbox)
 
 ui.launch(inbrowser=True)
 
