@@ -1,12 +1,16 @@
 import gradio as gr
 from dotenv import load_dotenv
 from research_manager import ResearchManager
+from deep_research_manager import DeepResearchManager
 
 load_dotenv(override=True)
 
 
+# single global manager instance so that its state could persist between user inputs
+manager = DeepResearchManager()
+# but for multiple users, they cannot share the same state, so you need to use session state /gr.State to pass state explicitly
 async def run(query: str):
-    async for chunk in ResearchManager().run(query):
+    async for chunk in manager.run(query):
         yield chunk # stream each chunk of result generated
 
 # gr.Blocks(..) allow more customized layouts/event handling...
