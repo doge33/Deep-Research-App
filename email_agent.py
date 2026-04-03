@@ -28,7 +28,11 @@ def send_email(subject:str, html_body: str)-> Dict[str, str]:
         "subject": f"{subject}",
         "html": f"{html_body}"
     })
-    print("Email response", rs.status_code)
+    print("Email response", rs)
+    return {
+        "status": "sent",
+        "email_id": rs.get("id", "unknown")
+    }
 #     return "success"
 
 INSTRUCTIONS = """You are able to send a nicely formatted HTML email based on a detailed report.

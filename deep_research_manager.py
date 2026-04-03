@@ -4,6 +4,7 @@ from brief_builder_agent import brief_builder_agent, ResearchBrief
 from search_agent import search_agent
 from planner_agent import planner_agent, WebSearchItem, WebSearchPlan
 from writer_agent import writer_agent, ReportData
+from evaluate_report_agent import evaluate_report_agent, ReportEvaluation
 from email_agent import email_agent
 import asyncio
 from dotenv import load_dotenv
@@ -43,8 +44,14 @@ class DeepResearchManager:
             yield "Searches complete, writing report..."
             report = await self.write_report(query, search_results)
 
+            # ===========Evaluate the report by another model=======
+            yield "report generated, evaluating report..."
+            evaluation = await self.evaluate_report(final_brief, report)
+            yield f"This Report has passed evaluation: {evaluation.is_acceptable}\nReason:{evaluation.reasoning}"
+            print(f"This Report has passed evaluation: {evaluation.is_acceptable}\nReason:{evaluation.reasoning}")
+
             #===========Email Report==============================
-            yield "Report written, sending email..."
+            yield "Sending email..."
             await self.send_email(report)
 
             yield "Email sent, research complete"
@@ -157,6 +164,15 @@ class DeepResearchManager:
 
         print("Finished writing report")
         return result.final_output_as(ReportData)
+
+    async def evaluate_report(self, brief:str, report:str) -> ReportEvaluation:
+        """evaluate the report's quality"""
+        print("Evaluating report")
+        input = f"Research Brief:{brief}\n Report Generated:{report}"
+        result = await Runner.run(evaluate_report_agent, input)
+        print("Finish evaluation")
+        return result.final_output_as(ReportEvaluation)
+
     
     async def send_email(self, report: ReportData) -> None:
         print("Writing email...")
