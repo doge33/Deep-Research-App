@@ -19,12 +19,12 @@ from agents import Agent, function_tool
 #     return "success"
 
 @function_tool
-def send_email(subject:str, html_body: str)-> Dict[str, str]:
-    """Send an email with the given subject and HTML body"""
+def send_email(email:str, subject:str, html_body: str)-> Dict[str, str]:
+    """Send an email with the given subject and HTML body to the provided email address"""
     resend.api_key = os.environ["RESEND_API_KEY"]
     rs = resend.Emails.send({
         "from": "Acme <onboarding@resend.dev>",
-        "to": ["sandylx33@gmail.com"],
+        "to": [email],
         "subject": f"{subject}",
         "html": f"{html_body}"
     })

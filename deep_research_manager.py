@@ -15,13 +15,17 @@ class DeepResearchManager:
 
     def __init__(self) -> None:
          self.pending_clarification = None
+         self.pending_email_delivery = False
 
     async def run(self, query:str):
         """Run the deep research process, yielding the status updates and the final report"""
         trace_id = gen_trace_id()
         with trace("Deep Research Trace", trace_id=trace_id):
             print(f"View trace: https://platform.openai.com/traces/trace?trace_id={trace_id}")
-            yield f"View trace: https://platform.openai.com/traces/trace?trace_id={trace_id}"
+            yield {
+                "type":"status", 
+                "content":f"View trace: https://platform.openai.com/traces/trace?trace_id={trace_id}"
+                }
             # =============Intake Verification=====================
             final_brief = await self.refine_research_query(query)
             # brief was not built when clarification needed          
@@ -31,31 +35,60 @@ class DeepResearchManager:
                 yield f"Please answer the following questions in order to better prepare the deep research:\n{further_questions}"
                 return
             # brief was built otherwise
-            yield f"Researching: {final_brief}"
+            yield {
+                "type":"status", 
+                "content":f"Researching: {final_brief}"
+            }
             print(f"Researching: {final_brief}")
 
             # ===========Plan and Execute Research===============
             print("Planning research...")
             search_plan = await self.plan_searches(query)
 
-            yield "Searches planned, starting to search..."     
+            yield {
+                "type":"status", 
+                "content":"Searches planned, starting to search..."
+            }     
+
             search_results = await self.perform_searches(search_plan)
 
-            yield "Searches complete, writing report..."
+            yield {
+                "type":"status", 
+                "content":"Searches complete, writing report..."
+            }
             report = await self.write_report(query, search_results)
 
             # ===========Evaluate the report by another model=======
-            yield "report generated, evaluating report..."
+            yield {
+                "type":"status", 
+                "content":"report generated, evaluating report..."
+            }
+
             evaluation = await self.evaluate_report(final_brief, report)
-            yield f"This Report has passed evaluation: {evaluation.is_acceptable}\nReason:{evaluation.reasoning}"
+            yield {
+                "type":"status", 
+                "content":f"This Report has passed evaluation: {evaluation.is_acceptable}\nReason:{evaluation.reasoning}"
+            }
             print(f"This Report has passed evaluation: {evaluation.is_acceptable}\nReason:{evaluation.reasoning}")
 
-            #===========Email Report==============================
-            yield "Sending email..."
-            await self.send_email(report)
+            # =========== Show report and update email option============
+            yield {
+                "type":"status", 
+                "content":"Here is your report...\n"
+            }
+            
+            yield {
+                "type":"report", 
+                "content":report.markdown_report
+            }
+            
+            self.pending_email_delivery = True
+            print(self.pending_clarification, self.pending_email_delivery)
 
-            yield "Email sent, research complete"
-            yield report.markdown_report
+            # this part will be handled separately when user choose to email report
+            # #===========Email Report==============================
+            # yield "Sending email..."
+            # await self.send_email(report)
 
 
 
@@ -174,11 +207,12 @@ class DeepResearchManager:
         return result.final_output_as(ReportEvaluation)
 
     
-    async def send_email(self, report: ReportData) -> None:
+    async def send_email(self, email: str, report: str) -> None:
         print("Writing email...")
+        input = f"User emai: {email}\n Markdown report:{report}"
         result = await Runner.run(
             email_agent,
-            report.markdown_report,
+            input,
         )
         print("Email sent")
         return report
