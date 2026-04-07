@@ -2,7 +2,7 @@ openai-agents
 openai
 pydantic
 asyncio
-gradio
+gradio==6.10.0
 python-dotenv
 resend
 

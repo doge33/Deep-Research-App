@@ -32,7 +32,10 @@ class DeepResearchManager:
             if(final_brief) == None:
                 further_questions = "\n".join(
                     f"\n{i+1}. {q}\n" for i, q in enumerate(self.pending_clarification["questions"]))                   
-                yield f"Please answer the following questions in order to better prepare the deep research:\n{further_questions}"
+                yield {
+                    "type":"clarification",
+                    "content":f"Please answer the following questions in order to better prepare the deep research:\n{further_questions}"
+                }
                 return
             # brief was built otherwise
             yield {
@@ -61,7 +64,7 @@ class DeepResearchManager:
             # ===========Evaluate the report by another model=======
             yield {
                 "type":"status", 
-                "content":"report generated, evaluating report..."
+                "content":"Report generated, evaluating report..."
             }
 
             evaluation = await self.evaluate_report(final_brief, report)
@@ -76,14 +79,15 @@ class DeepResearchManager:
                 "type":"status", 
                 "content":"Here is your report...\n"
             }
-            
+            self.pending_email_delivery = True
+            print(self.pending_clarification, self.pending_email_delivery)
+
             yield {
                 "type":"report", 
                 "content":report.markdown_report
             }
             
-            self.pending_email_delivery = True
-            print(self.pending_clarification, self.pending_email_delivery)
+            
 
             # this part will be handled separately when user choose to email report
             # #===========Email Report==============================
